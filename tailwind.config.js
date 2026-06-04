@@ -7,6 +7,7 @@ module.exports = {
       fontFamily: {
         sans: ['Roboto_400Regular', 'sans-serif'],
         bold: ['Roboto_700Bold', 'sans-serif'],
+        mono: ['SpaceMono_400Regular', 'monospace'],
       },
       colors: {
         background: '#121212', 
