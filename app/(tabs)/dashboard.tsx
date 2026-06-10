@@ -74,7 +74,7 @@ import { StorageManager } from '../../utils/StorageManager';
 
 export default function DashboardScreen() {
   const [tapCount, setTapCount] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSecretTap = () => {
     const newCount = tapCount + 1;

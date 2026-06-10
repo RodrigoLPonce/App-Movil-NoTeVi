@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
-import { StorageManager } from '../../utils/StorageManager';
+import { AlertData, StorageManager } from '../../utils/StorageManager';
 
 export default function AlertsScreen() {
   const [alerts, setAlerts] = useState<AlertData[]>([]);
