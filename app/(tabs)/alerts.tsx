@@ -1,39 +1,144 @@
+// ============================================================================
+// IMPORTS: Iconos, efectos, estado y componentes UI
+// ============================================================================
 import { Ionicons } from '@expo/vector-icons';
+// Iconos para alertas, estados, warning
 import { useFocusEffect } from 'expo-router';
+// Hook que se ejecuta cuando la pantalla obtiene el foco (se hace visible)
 import { useCallback, useState } from 'react';
+// useState: estados locales de alertas
+// useCallback: memoizar la función de carga de alertas
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, TouchableWithoutFeedback, View } from 'react-native';
+// Modal: diálogo modal para mostrar alerta activa
+// ScrollView: contenedor scrolleable para historial
+// TouchableOpacity: botón clickeable con opacidad
 import { AlertData, StorageManager } from '../../utils/StorageManager';
+// AlertData: tipo de datos de una alerta
+// StorageManager: servicio de persistencia de alertas
 
+// ============================================================================
+// COMPONENTE: AlertsScreen (Gestión de alertas y historial)
+// ============================================================================
+/**
+ * Pantalla de gestión de alertas de intrusión.
+ * Responsabilidades:
+ * 1. Mostrar alertas ACTIVAS en modal urgente
+ * 2. Mostrar historial de alertas RESUELTAS/CERRADAS
+ * 3. Permitir confirmar o descartar amenazas
+ * 4. Permitir limpiar el historial completo
+ * 
+ * EASTER EGG:
+ * - Long press (1.5s) en el título para borrar historial
+ */
 export default function AlertsScreen() {
+  // ========================================================================
+  // ESTADOS: Alertas y modal
+  // ========================================================================
+  /**
+   * alerts: lista completa de alertas desde storage
+   * setAlerts: función para actualizar la lista
+   */
   const [alerts, setAlerts] = useState<AlertData[]>([]);
+  
+  /**
+   * activeAlert: alerta activa actual (la que debe mostrarse en modal)
+   * setActiveAlert: función para actualizar el modal
+   * null = sin alerta activa = modal cerrado
+   */
   const [activeAlert, setActiveAlert] = useState<AlertData | null>(null);
 
+  // ========================================================================
+  // EFECTO: Cargar alertas cuando la pantalla obtiene el foco
+  // ========================================================================
+  /**
+   * useFocusEffect: se ejecuta cuando el usuario navega a esta pantalla
+   * useCallback: memoriza la función para evitar re-renders innecesarios
+   * 
+   * Esto asegura que el historial siempre esté actualizado cuando
+   * el usuario abre la pestaña de alertas.
+   */
   useFocusEffect(
     useCallback(() => {
       loadAlerts();
-    }, [])
+    }, []) // Dependencias vacías = ejecutar solo en cada foco
   );
 
+  // ========================================================================
+  // FUNCIÓN: loadAlerts (Cargar alertas desde storage)
+  // ========================================================================
+  /**
+   * Lee las alertas desde AsyncStorage y actualiza los estados.
+   * Pasos:
+   * 1. Obtener todas las alertas del storage
+   * 2. Actualizar estado general (setAlerts)
+   * 3. Buscar la primera alerta con estado='Activa'
+   * 4. Si existe, asignarla a activeAlert para mostrar modal
+   */
   const loadAlerts = async () => {
+    // 1. Leer del storage
     const data = await StorageManager.getAlerts();
+    
+    // 2. Actualizar lista completa
     setAlerts(data);
+    
+    // 3 y 4. Buscar alerta activa o null si no hay
     setActiveAlert(data.find(a => a.estado === 'Activa') || null);
   };
 
+  // ========================================================================
+  // FUNCIÓN: handleDecision (Resolver una alerta)
+  // ========================================================================
+  /**
+   * Se ejecuta cuando el usuario presiona "Confirmar Amenaza" o "Falsa Alarma"
+   * 
+   * Pasos:
+   * 1. Actualizar estado de la alerta a 'Resuelta/Cerrada' en storage
+   * 2. Recargar las alertas (se cierra el modal automáticamente)
+   * 
+   * Nota: el parámetro 'decision' no se usa actualmente, pero permite
+   * registrar si fue confirmada como amenaza real o falsa alarma.
+   */
   const handleDecision = async (id_alerta: string, decision: string) => {
+    // 1. Marcar alerta como resuelta en storage
     await StorageManager.updateAlertStatus(id_alerta, 'Resuelta/Cerrada');
+    
+    // 2. Recargar alertas (el modal se cierra porque activeAlert = null)
     loadAlerts(); 
   };
 
+  // ========================================================================
+  // FUNCIÓN: handleWipeData (Limpiar historial - Easter egg)
+  // ========================================================================
+  /**
+   * Se ejecuta con long press (1.5s) en el título del historial.
+   * Muestra confirmación antes de borrar todos los datos.
+   */
   const handleWipeData = async () => {
-    Alert.alert("Reinicio", "¿Borrar historial?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Limpiar", style: "destructive", onPress: async () => {
-          await StorageManager.clearAll();
-          loadAlerts();
+    // Mostrar dialogo nativo de confirmacion
+    Alert.alert(
+      "Reinicio",           // Titulo del dialogo
+      "¿Borrar historial?", // Mensaje/pregunta al usuario
+      [
+        // BOTON 1: Opcion de cancelar (segura)
+        { 
+          text: "Cancelar",  // Etiqueta del boton
+          style: "cancel"    // Estilo: cancelacion (no destructiva)
+          // No tiene onPress = simplemente cierra el dialogo sin hacer nada
+        },
+        
+        // BOTON 2: Opcion de limpiar (peligrosa - DESTRUCTIVA)
+        // - text: \"Limpiar\" = etiqueta del boton
+        // - style: \"destructive\" = color ROJO en iOS (advertencia visual)
+        // - onPress: funcion que se ejecuta al presionar\n        //   IMPORTANTE: Esta accion es IRREVERSIBLE\n        //   Borra completamente TODOS los datos de alertas
+        { 
+          text: "Limpiar",
+          style: "destructive",
+          onPress: async () => {
+            // PASO 1: Borrar completamente todos los datos\n            // StorageManager.clearAll() elimina la clave '@notevi_alerts'\n            // Esta es una accion IRREVERSIBLE - no se puede recuperar\n            await StorageManager.clearAll();\n            \n            // PASO 2: Recargar alertas desde storage (ahora esta vacio)\n            // loadAlerts() interna:\n            //   1. getAlerts() -> lee storage, retorna [] (vacio)\n            //   2. setAlerts([]) -> actualiza estado, limpia lista visual\n            //   3. setActiveAlert(null) -> cierra modal si esta abierto\n            //   4. La UI renderiza \"Sin eventos registrados\"\n            loadAlerts();
+          }
         }
-      }
-    ]);
+      ]
+    );
   };
 
   return (
