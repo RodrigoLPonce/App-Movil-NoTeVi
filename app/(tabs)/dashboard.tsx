@@ -97,7 +97,7 @@ import { StorageManager } from '../../utils/StorageManager';
  * 
  * EASTER EGG DE TESTING:
  * - Presionar 3x el título "Estado del Sistema" en 2 segundos
- * - Inyecta una alerta mock después de 10 segundos
+ * - Inyecta una alerta mock después de 5 segundos
  * - Navega automáticamente a la pantalla de alertas
  */
 export default function DashboardScreen() {
@@ -125,7 +125,7 @@ export default function DashboardScreen() {
    * 1. Incrementa contador de taps
    * 2. Si tapCount === 3:
    *    - Muestra alerta de confirmación
-   *    - Espera 10 segundos
+   *    - Espera 5 segundos
    *    - Inyecta una alerta mock en AsyncStorage
    *    - Navega a la pantalla de alertas
    * 3. Si no hay tap en 2 segundos, reinicia el contador
@@ -138,9 +138,9 @@ export default function DashboardScreen() {
     // Detectar si el usuario ha presionado 3 veces
     if (newCount === 3) {
       // Mostrar confirmación al usuario
-      Alert.alert("Simulador", "Alerta programada en 10s.");
+      Alert.alert("Simulador", "Alerta programada en 5s.");
       
-      // Ejecutar después de 10 segundos
+      // Ejecutar después de 5 segundos
       timerRef.current = setTimeout(async () => {
         // 1. Inyectar alerta mock en storage
         await StorageManager.injectMockAlert();
@@ -150,7 +150,7 @@ export default function DashboardScreen() {
         
         // 3. Reiniciar contador
         setTapCount(0);
-      }, 10000); // 10 segundos de espera
+      }, 5000); // 5 segundos de espera
     }
     
     // Reiniciar contador si no hay tap en 2 segundos
