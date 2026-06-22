@@ -19,9 +19,18 @@ Este proyecto está construido con Expo y React Native. Para iniciar el entorno 
    ```bash
    npm install
    ```
-
-3. **Ejecutar aplicación móvil**
-   ejecutar para poder iniciar la aplicación móvil en el localhost:puerto asignado.
-   ```bash
-   npx expo start
+3. **Despliegue con Docker**
+   ejecutar para leer el Dockerfile y empaquetar la aplicación web.
+      ```bash
+   docker build -t notevi-app .
    ```
+
+4. **Levantar el contenedor**
+   ejecutar para iniciar el servidor y exponer el puerto en tu navegador (localhost:8081).
+      ```bash
+   docker run -p 8081:8081 notevi-app
+   ```
+
+> [!IMPORTANT]
+> Este proyecto debe ejecutarse mediante **Docker**.
+> No utilizar `npx expo start` para el despliegue o pruebas estándar.
